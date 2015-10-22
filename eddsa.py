@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Draft1. Björn Edström <be@bjrn.se>
+# Draft1. Björn Edström <be@bjrn.se> based on Ed25519 code and EdDSA spec.
 
 # https://github.com/gvanas/KeccakCodePackage
 import CompactFIPS202
@@ -32,19 +32,20 @@ def int2le(integer, pad):
 
 
 class EdDSA(object):
-    b = None
-    q = None
-    l = None
-    B = None
-    d = None
-    a = None
-    c = None
+    b = None # bits
+    q = None # prime
+    l = None # order
+    B = None # base point (x, y)
+    d = None # edwards equation
+    a = None # edwards equation
+    c = None # cofactor
 
     def Hint(self, m):
         return le2int(self.H(m))
 
     def inv(self, x):
-        return pow(x, self.q-2, self.q)
+        p = pow(x, self.q-2, self.q)
+        return p
 
     def edwards(self, P, Q):
         x1 = P[0]
@@ -52,7 +53,7 @@ class EdDSA(object):
         x2 = Q[0]
         y2 = Q[1]
         x3 = (x1*y2+x2*y1) * self.inv(1+self.d*x1*x2*y1*y2)
-        y3 = (y1*y2+x1*x2) * self.inv(1-self.d*x1*x2*y1*y2)
+        y3 = (y1*y2-self.a*x1*x2) * self.inv(1-self.d*x1*x2*y1*y2)
         return [x3 % self.q,y3 % self.q]
 
     def scalarmult(self, P, e):
@@ -133,7 +134,7 @@ class Ed25519(EdDSA):
     l = 2**252 + 27742317777372353535851937790883648493
     B = (15112221349535400772501151409588531511454012693041857206046113283949847762202, 46316835694926478169428394003475163141307993866256225615783033603165251855960)
     d = -4513249062541557337682894930092624173785641285191125241628941591882900924598840740
-    #a = -1
+    a = -1
 
     def __init__(self):
         self.I = pow(2, (self.q-1) // 4, self.q)
@@ -156,7 +157,7 @@ class Ed448(EdDSA):
     l = 2**446 - 13818066809895115352007386748515426880336692474882178609894547503885
     B = (0x297ea0ea2692ff1b4faff46098453a6a26adf733245f065c3c59d0709cecfa96147eaaf3932d94c63d96c170033f4ba0c7f0de840aed939f, 0x13)
     d = -39081
-    #a = 1
+    a = 1
 
     def H(self, s):
         return CompactFIPS202.SHAKE256(bytearray(s), (self.b*2)//8)
