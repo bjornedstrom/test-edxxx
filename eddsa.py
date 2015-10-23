@@ -102,15 +102,15 @@ class EdDSA(object):
 
     def publickey(self, sk):
         h = self.H(sk)
-        # XXX: Setting bit b-1 (constant time montgomery ladder)
+        # XXX: Setting high bit (constant time montgomery ladder)
         # XXX: Clearing the lowest c bits.
-        a = 2**(self.b-2) + sum(2**i * self.bit(h,i) for i in range(self.c,self.b-2))
+        a = 2**(self.n) + sum(2**i * self.bit(h,i) for i in range(self.c,self.n))
         A = self.scalarmult(self.B, a)
         return self.encodepoint(A)
 
     def signature(self,m,sk,pk):
         h = self.H(sk)
-        a = 2**(self.b-2) + sum(2**i * self.bit(h,i) for i in range(self.c,self.b-2))
+        a = 2**(self.n) + sum(2**i * self.bit(h,i) for i in range(self.c,self.n))
         r = self.Hint(h[self.b//8:self.b//4] + m)
         R = self.scalarmult(self.B,r)
         S = (r + self.Hint(self.encodepoint(R) + pk + m) * a) % self.l
@@ -130,6 +130,7 @@ class EdDSA(object):
 class Ed25519(EdDSA):
     q = 2**255 - 19
     b = 256
+    n = 254
     c = 3
     l = 2**252 + 27742317777372353535851937790883648493
     B = (15112221349535400772501151409588531511454012693041857206046113283949847762202, 46316835694926478169428394003475163141307993866256225615783033603165251855960)
@@ -153,9 +154,11 @@ class Ed25519(EdDSA):
 class Ed448(EdDSA):
     q = 2**448 - 2**224 - 1
     b = 456
+    n = 447
     c = 2
     l = 2**446 - 13818066809895115352007386748515426880336692474882178609894547503885
-    B = (0x297ea0ea2692ff1b4faff46098453a6a26adf733245f065c3c59d0709cecfa96147eaaf3932d94c63d96c170033f4ba0c7f0de840aed939f, 0x13)
+    # https://tools.ietf.org/html/draft-irtf-cfrg-curves-07#section-4.2
+    B = (224580040295924300187604334099896036246789641632564134246125461686950415467406032909029192869357953282578032075146446173674602635247710, 298819210078481492676017930443930673437544040154080242095928241372331506189835876003536878655418784733982303233503462500531545062832660)
     d = -39081
     a = 1
 
