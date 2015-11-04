@@ -79,7 +79,7 @@ class EdDSA(object):
     def isoncurve(self, P):
         x = P[0]
         y = P[1]
-        return (-x*x + y*y - 1 - self.d*x*x*y*y) % self.q == 0
+        return (self.a*x*x + y*y - 1 - self.d*x*x*y*y) % self.q == 0
 
     def decodeint(self, s):
         return le2int(s)
